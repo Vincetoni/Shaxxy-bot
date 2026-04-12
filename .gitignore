@@ -1,0 +1,9 @@
+auth_info/
+.env
+node_modules/
+auth_info_baileys/
+session/
+sessions/
+logs/
+dist/
+build/
