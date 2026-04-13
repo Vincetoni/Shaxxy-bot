@@ -1,4 +1,4 @@
-import { warnings } from './warn.js'; // Share the map
+import { getDb } from '../database/db.js';
 
 export default {
     name: 'unwarn',
@@ -7,16 +7,21 @@ export default {
     adminOnly: true,
     groupOnly: true,
     
-    async execute(sock, msg, args, { chatId }) {
-        const mentioned = msg.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    async execute(sock, msg, args, context) {
+        const { chatId } = context;
+        
+        const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+        
         if (mentioned.length === 0) {
-            return sock.sendMessage(chatId, { text: '⚠️ Mention a user: !unwarn @user' });
+            return await sock.sendMessage(chatId, { text: '⚠️ Mention a user: !unwarn @user' });
         }
         
         const target = mentioned[0];
-        const key = `${chatId}:${target}`;
         
-        warnings.delete(key);
+        const db = getDb();
+        await db.run('UPDATE user_stats SET warnings = 0 WHERE user_id = ? AND group_id = ?',
+                    [target, chatId]);
+        
         await sock.sendMessage(chatId, { 
             text: `✅ Warnings cleared for @${target.split('@')[0]}`,
             mentions: [target]

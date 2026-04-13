@@ -6,10 +6,13 @@ export default {
     category: 'ECONOMY',
     description: 'Check your balance',
     
-    async execute(sock, msg, args, { chatId, sender, msg: fullMsg }) {
-        const mentioned = fullMsg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    async execute(sock, msg, args, context) {
+        const { chatId, sender } = context;
+        
+        // FIX: Use msg parameter correctly
+        const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
         const target = mentioned[0] || sender;
-        const name = mentioned.length > 0 ? `@${target.split('@')[0]}` : 'You';
+        const name = mentioned.length > 0 ? `@${target.split('@')[0]}` : 'Your';
         
         const stats = await getUserStats(target, chatId);
         

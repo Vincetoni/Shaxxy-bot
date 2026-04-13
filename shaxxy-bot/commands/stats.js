@@ -7,9 +7,12 @@ export default {
     description: 'Show your stats',
     groupOnly: true,
     
-    async execute(sock, msg, args, { chatId, sender, msg: fullMsg }) {
-        // Check if viewing someone else's stats (admin only)
-        const mentioned = fullMsg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    async execute(sock, msg, args, context) {
+        const { chatId, sender } = context;
+        
+        // FIX: msg is the second parameter, not in context
+        // Use msg directly to get mentions
+        const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
         let targetUser = sender;
         let targetName = msg.pushName || 'You';
         

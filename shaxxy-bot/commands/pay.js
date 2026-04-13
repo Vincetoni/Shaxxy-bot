@@ -6,27 +6,30 @@ export default {
     description: 'Send money to someone',
     usage: '!pay @user amount',
     
-    async execute(sock, msg, args, { chatId, sender, msg: fullMsg }) {
-        const mentioned = fullMsg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    async execute(sock, msg, args, context) {
+        const { chatId, sender } = context;
+        
+        // FIX: Use msg parameter correctly, not context.msg
+        const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
         
         if (mentioned.length === 0) {
-            return sock.sendMessage(chatId, { text: '⚠️ Usage: !pay @user 100' });
+            return await sock.sendMessage(chatId, { text: '⚠️ Usage: !pay @user 100' });
         }
         
-        const amount = parseInt(args[0]) || parseInt(args[1]);
+        const amount = parseInt(args.find(a => !isNaN(a)));
         if (!amount || amount <= 0) {
-            return sock.sendMessage(chatId, { text: '⚠️ Enter a valid amount: !pay @user 100' });
+            return await sock.sendMessage(chatId, { text: '⚠️ Enter valid amount: !pay @user 100' });
         }
         
         const receiver = mentioned[0];
         if (receiver === sender) {
-            return sock.sendMessage(chatId, { text: '❌ You can\'t pay yourself!' });
+            return await sock.sendMessage(chatId, { text: '❌ Can\'t pay yourself!' });
         }
         
         const senderStats = await getUserStats(sender, chatId);
         
         if (senderStats.money < amount) {
-            return sock.sendMessage(chatId, { 
+            return await sock.sendMessage(chatId, { 
                 text: `❌ You only have ${senderStats.money.toLocaleString()}` 
             });
         }
@@ -38,8 +41,7 @@ export default {
                     [amount, receiver, chatId]);
         
         await sock.sendMessage(chatId, { 
-            text: `💸 *PAYMENT SUCCESSFUL*\n\n` +
-                  `@${sender.split('@')[0]} sent ${amount.toLocaleString()} to @${receiver.split('@')[0]}`,
+            text: `💸 @${sender.split('@')[0]} sent ${amount.toLocaleString()} to @${receiver.split('@')[0]}`,
             mentions: [sender, receiver]
         });
     }

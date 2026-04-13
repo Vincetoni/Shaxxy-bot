@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SHAXXY BOT - Login</title>
+    <style>
+        body { font-family: Arial; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #2d2d2d; padding: 40px; border-radius: 10px; text-align: center; }
+        input { padding: 10px; margin: 10px; width: 200px; border-radius: 5px; border: none; }
+        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #45a049; }
+        #result { margin-top: 20px; padding: 10px; background: #1a1a1a; border-radius: 5px; min-height: 50px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🤖 SHAXXY BOT</h1>
+        <h3>Phone Login</h3>
+        
+        <div id="step1">
+            <input type="text" id="phone" placeholder="Phone number" value="09135716534"><br>
+            <button onclick="sendOTP()">Send OTP</button>
+        </div>
+        
+        <div id="step2" style="display:none;">
+            <p>OTP sent! Check console or enter below:</p>
+            <input type="text" id="otp" placeholder="Enter OTP"><br>
+            <button onclick="verifyOTP()">Verify</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000';
+        let phoneNumber = '';
+        
+        async function sendOTP() {
+            phoneNumber = document.getElementById('phone').value;
+            const res = await fetch(`${API}/api/auth/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: phoneNumber})
+            });
+            const data = await res.json();
+            
+            document.getElementById('result').innerHTML = 
+                `<p>✅ ${data.message}</p><p>Dev OTP: <b>${data.dev_otp}</b></p>`;
+            
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+        }
+        
+        async function verifyOTP() {
+            const otp = document.getElementById('otp').value;
+            const res = await fetch(`${API}/api/auth/verify`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: phoneNumber, otp: otp})
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                document.getElementById('result').innerHTML = 
+                    `<p>✅ Login successful!</p><p>Token: ${data.token.substring(0, 20)}...</p>`;
+                localStorage.setItem('token', data.token);
+            } else {
+                document.getElementById('result').innerHTML = `<p>❌ ${data.error}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

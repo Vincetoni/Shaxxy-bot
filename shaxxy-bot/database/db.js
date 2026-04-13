@@ -15,6 +15,16 @@ export async function initDatabase() {
 
     // Create tables
     await db.exec(`
+        -- user data
+     CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone TEXT UNIQUE NOT NULL,
+        username TEXT,
+        avatar TEXT DEFAULT 'default.png',
+        banner TEXT DEFAULT 'default-banner.png',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
         -- Group settings
         CREATE TABLE IF NOT EXISTS group_settings (
             group_id TEXT PRIMARY KEY,
@@ -80,7 +90,7 @@ export async function initDatabase() {
 
     // Insert default shop items
     const defaultItems = [
-        { name: 'XP Boost', price: 500, description: '2x XP for 1 hour', effect: '{"xp_multiplier": 2, "duration": 3600}' },
+        { name: 'XP Boost', price: 50, description: '2x XP for 1 hour', effect: '{"xp_multiplier": 2, "duration": 3600}' },
         { name: 'Lucky Charm', price: 1000, description: 'Better daily rewards', effect: '{"daily_bonus": 100}' },
         { name: 'Shield', price: 2000, description: 'Protection from warnings', effect: '{"warning_immunity": 1}' },
         { name: 'VIP Badge', price: 5000, description: 'Shows VIP status', effect: '{"badge": "VIP"}' }

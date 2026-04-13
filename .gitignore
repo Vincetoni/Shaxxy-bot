@@ -7,3 +7,5 @@ sessions/
 logs/
 dist/
 build/
+*.db
+community.db

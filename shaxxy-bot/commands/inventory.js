@@ -6,20 +6,22 @@ export default {
     category: 'ECONOMY',
     description: 'Show your items',
     
-    async execute(sock, msg, args, { chatId, sender, msg: fullMsg }) {
-        const db = getDb();
+    async execute(sock, msg, args, context) {
+        const { chatId, sender } = context;
         
-        const mentioned = fullMsg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+        // FIX: Use msg parameter correctly
+        const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
         const target = mentioned[0] || sender;
         const name = mentioned.length > 0 ? `@${target.split('@')[0]}` : 'Your';
         
+        const db = getDb();
         const items = await db.all(
             'SELECT item_name, quantity FROM inventory WHERE user_id = ? AND group_id = ?',
             [target, chatId]
         );
         
         if (items.length === 0) {
-            return sock.sendMessage(chatId, { 
+            return await sock.sendMessage(chatId, { 
                 text: `📦 ${name} inventory is empty\n\nBuy items with !shop`,
                 mentions: mentioned
             });

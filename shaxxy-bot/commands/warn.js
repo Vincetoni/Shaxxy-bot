@@ -1,4 +1,7 @@
-const warnings = new Map(); // group:user -> count
+import { getDb, getUserStats } from '../database/db.js';
+
+// Export for other commands to use
+export const warnings = new Map();
 
 export default {
     name: 'warn',
@@ -8,30 +11,40 @@ export default {
     groupOnly: true,
     
     async execute(sock, msg, args, context) {
-        const { chatId, protection } = context;
+        const { chatId, sender, protection } = context;
         
-        const mentioned = msg.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
+        const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+        
         if (mentioned.length === 0) {
-            return sock.sendMessage(chatId, { text: '⚠️ Mention a user: !warn @user [reason]' });
+            return await sock.sendMessage(chatId, { text: '⚠️ Mention a user: !warn @user [reason]' });
         }
         
         const target = mentioned[0];
-        const reason = args.slice(mentioned.length).join(' ') || 'No reason';
+        const reason = args.filter(a => !mentioned.includes(a)).join(' ') || 'No reason';
         
-        const key = `${chatId}:${target}`;
-        const current = (warnings.get(key) || 0) + 1;
-        warnings.set(key, current);
+        // Check if target is admin
+        if (await protection.isAdmin(chatId, target)) {
+            return await sock.sendMessage(chatId, { text: '❌ Cannot warn an admin' });
+        }
         
-        if (current >= 3) {
+        const db = getDb();
+        const stats = await getUserStats(target, chatId);
+        const newWarnings = (stats.warnings || 0) + 1;
+        
+        await db.run('UPDATE user_stats SET warnings = ? WHERE user_id = ? AND group_id = ?',
+                    [newWarnings, target, chatId]);
+        
+        if (newWarnings >= 3) {
             await sock.groupParticipantsUpdate(chatId, [target], 'remove');
+            await db.run('UPDATE user_stats SET warnings = 0 WHERE user_id = ? AND group_id = ?',
+                        [target, chatId]);
             await sock.sendMessage(chatId, { 
                 text: `🚫 @${target.split('@')[0]} kicked after 3 warnings`,
                 mentions: [target]
             });
-            warnings.delete(key);
         } else {
             await sock.sendMessage(chatId, { 
-                text: `⚠️ Warning ${current}/3 for @${target.split('@')[0]}\nReason: ${reason}`,
+                text: `⚠️ Warning ${newWarnings}/3 for @${target.split('@')[0]}\nReason: ${reason}`,
                 mentions: [target]
             });
         }

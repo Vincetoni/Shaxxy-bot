@@ -1,4 +1,5 @@
-// Level thresholds: 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000...
+// utils/levels.js
+
 export function calculateLevel(xp) {
     if (xp < 100) return 1;
     if (xp < 300) return 2;
@@ -30,21 +31,18 @@ export function getLevelTitle(level) {
     return titles[level] || 'Godlike';
 }
 
-export function getNextLevelXp(currentLevel) {
+export function getXpForNextLevel(currentXp) {
+    const currentLevel = calculateLevel(currentXp);
     const thresholds = {
         1: 100, 2: 300, 5: 800, 10: 2000, 20: 5000,
         50: 15000, 100: 40000, 200: 100000, 500: 300000, 1000: 800000
     };
-    return thresholds[currentLevel] || currentLevel * 1000;
-}
-
-export function getXpForNextLevel(currentXp) {
-    const currentLevel = calculateLevel(currentXp);
-    const nextLevelThreshold = getNextLevelXp(currentLevel);
+    const needed = thresholds[currentLevel] || currentLevel * 1000;
+    
     return {
         current: currentXp,
-        needed: nextLevelThreshold,
-        remaining: nextLevelThreshold - currentXp,
-        percent: Math.floor((currentXp / nextLevelThreshold) * 100)
+        needed: needed,
+        remaining: needed - currentXp,
+        percent: Math.min(Math.floor((currentXp / needed) * 100), 100)
     };
 }
